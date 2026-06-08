@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mars Metrics: Metonic Frequency Analysis</title>
+    <title>Mars Metrics: 3-Body Spin Synchronization</title>
     <style>
         body {
             background-color: #0b0f19;
@@ -29,150 +29,166 @@
 <body>
 
     <h1>Mars Metrics</h1>
-    <div class="description">Zero-Fitted Computational Runtime — Distances and Frequencies Derived via Integer Steps</div>
+    <div class="description">3-Body Spin-Orbit Coupling Matrix — Real-Time Phase Synchronization Graph</div>
 
     <div class="container">
         <div class="panel">
-            <h3 style="margin-top:0; color: #ff79c6;">Derived Spirographic Trajectories</h3>
-            <canvas id="orbitCanvas" width="500" height="500"></canvas>
+            <h3 style="margin-top:0; color: #ff79c6;">Coupled Spin-Orbit Cavity</h3>
+            <canvas id="syncCanvas" width="500" height="500"></canvas>
         </div>
         <div class="panel">
-            <h3 style="margin-top:0; color: #50fa7b;">Coherence Envelope Breathing (95:24 Step Matrix)</h3>
-            <canvas id="coherenceCanvas" width="500" height="500"></canvas>
+            <h3 style="margin-top:0; color: #50fa7b;">3-Body Synchronization Wave</h3>
+            <canvas id="graphCanvas" width="500" height="500"></canvas>
         </div>
     </div>
 
     <div class="controls">
         <div class="slider-group">
-            <label for="timeSlider">Time Window (Local Years):</label>
-            <input type="range" id="timeSlider" min="0.005" max="0.100" step="0.001" value="0.050">
-            <span id="timeVal" class="val-display">0.050</span>
+            <label for="speedSlider">Time Step Acceleration:</label>
+            <input type="range" id="speedSlider" min="0.00001" max="0.0005" step="0.00001" value="0.0001">
+            <span id="speedVal" class="val-display">0.0001</span>
         </div>
     </div>
 
     <script>
         // ==========================================
-        // 1. FIRST-PRINCIPLES STRUCTURAL CONSTANTS
+        // 1. SYSTEM STRUCTURAL PARAMETERS (Derived)
         // ==========================================
-        const EPSILON = 1 / 64;       // Universal resolution grid constant
-        const TORSION_FACTOR = 5 / 3; // Outer aphelion field expansion scaling factor
+        const EPSILON = 1 / 64;
+        const TORSION_FACTOR = 5 / 3;
 
-        // Integer steps derived from the structural lattice requirements
-        const STEP_PHOBOS = 112; 
-        const STEP_DEIMOS = 228;
+        const r_Phobos = 1 + (112 * EPSILON);                 // 2.750 R_M
+        const r_Deimos = 1 + (228 * EPSILON * TORSION_FACTOR); // 6.9375 R_M
 
-        // Observed systemic frequency baseline parameters (cycles per Mars Year)
-        const F_PHOBOS_BASE = 2154.11558;
-        const F_DEIMOS_BASE = 544.16760;
+        // Frequencies scaled relative to 1 Mars Year baseline
+        const f_Mars_Spin = 669.59Basic; // Mars Sols per Mars Year (approximate structural baseline)
+        const f_Phobos = 2154.11558;
+        const f_Deimos = 544.16760;
 
-        // ==========================================
-        // 2. DYNAMIC MATHEMATICAL DERIVATIONS
-        // ==========================================
-        // Spatial distance radii derived from pure integer grid steps (No direct value inputs)
-        const r_Phobos_derived = 1 + (STEP_PHOBOS * EPSILON);                 // Evaluates cleanly to 11/4 (2.750)
-        const r_Deimos_derived = 1 + (STEP_DEIMOS * EPSILON * TORSION_FACTOR); // Evaluates cleanly to 111/16 (6.9375)
+        // Angular Velocities
+        const omega_M = 2 * Math.PI * 669.5928; // Precise rotation velocity
+        const omega_P = 2 * Math.PI * f_Phobos;
+        const omega_D = 2 * Math.PI * f_Deimos;
 
-        // Generate angular resonance velocities directly from the baseline frequency matrix
-        const omega_P = 2 * Math.PI * F_PHOBOS_BASE;
-        const omega_P_driven = 2 * Math.PI * F_DEIMOS_BASE * (95 / 24); // Driven tracking frequency boundary
+        // Canvas routing
+        const sCanvas = document.getElementById('syncCanvas');
+        const sCtx = sCanvas.getContext('2d');
+        const gCanvas = document.getElementById('graphCanvas');
+        const gCtx = gCanvas.getContext('2d');
 
-        const omega_D = 2 * Math.PI * F_DEIMOS_BASE;
+        const speedSlider = document.getElementById('speedSlider');
+        const speedDisplay = document.getElementById('speedVal');
 
-        // Canvas setups
-        const oCanvas = document.getElementById('orbitCanvas');
-        const oCtx = oCanvas.getContext('2d');
-        const cCanvas = document.getElementById('coherenceCanvas');
-        const cCtx = cCanvas.getContext('2d');
+        let time = 0;
+        const graphHistory = [];
 
-        // UI interactive elements
-        const slider = document.getElementById('timeSlider');
-        const display = document.getElementById('timeVal');
+        function animate() {
+            const dt = parseFloat(speedSlider.value);
+            time += dt;
 
-        function render(tMax) {
-            const steps = 5000;
+            // 1. Calculate Instantaneous Rotational Phases
+            const phi_M = (omega_M * time) % (2 * Math.PI);
+            const phi_P = (omega_P * time) % (2 * Math.PI);
+            const phi_D = (omega_D * time) % (2 * Math.PI);
+
+            // Coordinates for physical rendering
+            const pX = r_Phobos * Math.cos(phi_P);
+            const pY = r_Phobos * Math.sin(phi_P);
+            const dX = r_Deimos * Math.cos(phi_D);
+            const dY = r_Deimos * Math.sin(phi_D);
+
+            // 2. Compute 3-Body Triadic Phase Convergence
+            // Measures the simultaneous alignment between planet spin and satellite vectors
+            let diff_MP = Math.abs(phi_M - phi_P); diff_MP = Math.min(diff_MP, 2 * Math.PI - diff_MP);
+            let diff_PD = Math.abs(phi_P - phi_D); diff_PD = Math.min(diff_PD, 2 * Math.PI - diff_PD);
+            let diff_DM = Math.abs(phi_D - phi_M); diff_DM = Math.min(diff_DM, 2 * Math.PI - diff_DM);
+
+            // Combined synchronization score (1.0 = absolute perfect triadic convergence)
+            const syncScore = (1 - diff_MP/(2*Math.PI)) * (1 - diff_PD/(2*Math.PI)) * (1 - diff_DM/(2*Math.PI));
             
-            oCtx.clearRect(0, 0, oCanvas.width, oCanvas.height);
-            cCtx.clearRect(0, 0, cCanvas.width, cCanvas.height);
+            graphHistory.push(syncScore);
+            if (graphHistory.length > gCanvas.width) graphHistory.shift();
 
-            // Left Panel: Orbit Rendering Engine
-            const oCX = oCanvas.width / 2;
-            const oCY = oCanvas.height / 2;
-            const spatialScale = 32; // Standard pixel scaling multiplier for local canvas view block
+            // Clear viewports
+            sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
+            gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
 
-            // Base Unit Node (Mars Center)
-            oCtx.beginPath();
-            oCtx.arc(oCX, oCY, 6, 0, 2 * Math.PI);
-            oCtx.fillStyle = '#f8f8f2';
-            oCtx.fill();
+            // ------------------------------------------
+            // RENDER LEFT CANVAS: CAVITY SPACE
+            // ------------------------------------------
+            const cX = sCanvas.width / 2;
+            const cY = sCanvas.height / 2;
+            const scale = 32;
 
-            // Render Phobos Shell using derived spatial metric
-            oCtx.lineWidth = 0.8;
-            oCtx.beginPath();
-            oCtx.strokeStyle = 'rgba(255, 121, 198, 0.6)';
-            for (let i = 0; i <= steps; i++) {
-                let t = (i / steps) * tMax;
-                let x = oCX + (r_Phobos_derived * Math.cos(omega_P * t)) * spatialScale;
-                let y = oCY + (r_Phobos_derived * Math.sin(omega_P * t)) * spatialScale;
-                if (i === 0) oCtx.moveTo(x, y); else oCtx.lineTo(x, y);
+            // Draw central planet disk (Mars core)
+            sCtx.beginPath();
+            sCtx.arc(cX, cY, scale, 0, 2 * Math.PI);
+            sCtx.strokeStyle = '#44475a';
+            sCtx.lineWidth = 2;
+            sCtx.stroke();
+
+            // Draw planet spin orientation vector line
+            sCtx.beginPath();
+            sCtx.moveTo(cX, cY);
+            sCtx.lineTo(cX + scale * Math.cos(phi_M), cY + scale * Math.sin(phi_M));
+            sCtx.strokeStyle = '#f8f8f2';
+            sCtx.lineWidth = 3;
+            sCtx.stroke();
+
+            // Inter-body conjugation mesh lines (like Venusian Metrics)
+            sCtx.lineWidth = 0.5;
+            sCtx.strokeStyle = 'rgba(139, 233, 253, 0.3)';
+            sCtx.beginPath();
+            sCtx.moveTo(cX + pX*scale, cY + pY*scale);
+            sCtx.lineTo(cX + dX*scale, cY + dY*scale); // Phobos to Deimos link
+            sCtx.stroke();
+
+            sCtx.strokeStyle = 'rgba(255, 121, 198, 0.3)';
+            sCtx.beginPath();
+            sCtx.moveTo(cX + scale * Math.cos(phi_M), cY + scale * Math.sin(phi_M));
+            sCtx.lineTo(cX + pX*scale, cY + pY*scale); // Spin vector to Phobos link
+            sCtx.stroke();
+
+            // Draw Body Nodes
+            sCtx.fillStyle = '#ff79c6'; // Phobos Node
+            sCtx.beginPath();
+            sCtx.arc(cX + pX*scale, cY + pY*scale, 4, 0, 2 * Math.PI);
+            sCtx.fill();
+
+            sCtx.fillStyle = '#8be9fd'; // Deimos Node
+            sCtx.beginPath();
+            sCtx.arc(cX + dX*scale, cY + dY*scale, 5, 0, 2 * Math.PI);
+            sCtx.fill();
+
+            // ------------------------------------------
+            // RENDER RIGHT CANVAS: SCROLLING SYNCHRONIZATION WAVE
+            // ------------------------------------------
+            gCtx.strokeStyle = '#282a36';
+            gCtx.lineWidth = 1;
+            for(let i = 1; i < 5; i++) {
+                let y = gCanvas.height - (i * (gCanvas.height / 5));
+                gCtx.beginPath(); gCtx.moveTo(0, y); gCtx.lineTo(gCanvas.width, y); gCtx.stroke();
             }
-            oCtx.stroke();
 
-            // Render Deimos Shell using derived spatial metric
-            oCtx.lineWidth = 1.2;
-            oCtx.beginPath();
-            oCtx.strokeStyle = 'rgba(139, 233, 253, 0.8)';
-            for (let i = 0; i <= steps; i++) {
-                let t = (i / steps) * tMax;
-                let x = oCX + (r_Deimos_derived * Math.cos(omega_D * t)) * spatialScale;
-                let y = oCY + (r_Deimos_derived * Math.sin(omega_D * t)) * spatialScale;
-                if (i === 0) oCtx.moveTo(x, y); else oCtx.lineTo(x, y);
+            gCtx.beginPath();
+            gCtx.strokeStyle = '#50fa7b';
+            gCtx.lineWidth = 1.5;
+            for (let i = 0; i < graphHistory.length; i++) {
+                let gx = i;
+                // Scale score down to fit graph view comfortably
+                let gy = gCanvas.height - (graphHistory[i] * (gCanvas.height - 40)) - 20;
+                if (i === 0) gCtx.moveTo(gx, gy); else gCtx.lineTo(gx, gy);
             }
-            oCtx.stroke();
+            gCtx.stroke();
 
-            // Right Panel: Relational Dynamics Coherence Display
-            cCtx.strokeStyle = '#282a36';
-            cCtx.lineWidth = 1;
-            for(let g = 1; g < 5; g++) {
-                let yLine = cCanvas.height - (g * (cCanvas.height / 5));
-                cCtx.beginPath();
-                cCtx.moveTo(0, yLine);
-                cCtx.lineTo(cCanvas.width, yLine);
-                cCtx.stroke();
-            }
-
-            // Phase tracking loops running the Section 3.3 coherence envelope equations
-            cCtx.beginPath();
-            cCtx.strokeStyle = '#50fa7b';
-            cCtx.lineWidth = 1.5;
-
-            for (let i = 0; i <= steps; i++) {
-                let t = (i / steps) * tMax;
-                
-                // Track how the driven phase steps fluctuate relative to the absolute base
-                let theta_P_driven = (omega_P_driven * t) % (2 * Math.PI);
-                let theta_D = (omega_D * t) % (2 * Math.PI);
-                
-                let d_theta = Math.abs(theta_P_driven - theta_D);
-                d_theta = Math.min(d_theta, 2 * Math.PI - d_theta); // Frame wraparound boundary handling
-                
-                let coherence = 1.0 - (d_theta / (2 * Math.PI));
-                
-                let graphX = (i / steps) * cCanvas.width;
-                let graphY = cCanvas.height - (coherence * (cCanvas.height - 40)) - 20;
-                
-                if (i === 0) cCtx.moveTo(graphX, graphY); else cCtx.lineTo(graphX, graphY);
-            }
-            cCtx.stroke();
+            requestAnimationFrame(animate);
         }
 
-        // Initialize execution sequence
-        render(parseFloat(slider.value));
-
-        slider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            display.textContent = val.toFixed(3);
-            render(val);
+        speedSlider.addEventListener('input', (e) => {
+            speedDisplay.textContent = parseFloat(e.target.value).toFixed(5);
         });
+
+        animate();
     </script>
 </body>
 </html>

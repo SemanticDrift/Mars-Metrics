@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mars Metrics: Local Chamber Phase-Lock</title>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { margin-bottom: 5px; font-size: 24px; color: #f8f8f2; }
+        .description { color: #8be9fd; margin-bottom: 20px; font-size: 14px; }
+        .container { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
+        .panel { background: #1e1f29; padding: 15px; border-radius: 8px; border: 1px solid #44475a; }
+        canvas { background: #0b0f19; border: 1px solid #282a36; border-radius: 4px; }
+        .controls { margin-top: 20px; width: 100%; max-width: 1030px; background: #1e1f29; padding: 15px; border-radius: 8px; border: 1px solid #44475a; box-sizing: border-box; }
+        .slider-group { display: flex; align-items: center; gap: 15px; }
+        label { font-size: 14px; min-width: 150px; }
+        input[type=range] { flex-grow: 1; accent-color: #50fa7b; }
+        .val-display { min-width: 80px; text-align: right; font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body>
+
+    <h1>Mars Metrics</h1>
+    <div class="description">Unapproximated satellite harmonic phase-lock and spirographic trajectories.</div>
+
+    <div class="container">
+        <div class="panel">
+            <h3 style="margin-top:0; color: #ff79c6;">Spirographic Local Shell Trajectories</h3>
+            <canvas id="orbitCanvas" width="500" height="500"></canvas>
+        </div>
+        <div class="panel">
+            <h3 style="margin-top:0; color: #50fa7b;">Coherence Envelope Breathing (95:24 Lock)</h3>
+            <canvas id="coherenceCanvas" width="500" height="500"></canvas>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="slider-group">
+            <label for="timeSlider">Time Window (Years):</label>
+            <input type="range" id="timeSlider" min="0.005" max="0.100" step="0.001" value="0.050">
+            <span id="timeVal" class="val-display">0.050</span>
+        </div>
+    </div>
+
+    <script>
+        // 1. Core Invariants (Unapproximated Parameters)
+        const f_P = 2154.11558;  // Phobos frequency (cycles/Mars year)
+        const f_D = 544.16760;   // Deimos frequency (cycles/Mars year)
+        
+        const r_P = 2.750;       // Predicted UHS Node (11/4 R_M)
+        const r_D = 6.9375;      // Predicted UHS Node (111/16 R_M)
+
+        const omega_P = 2 * Math.PI * f_P;
+        const omega_D = 2 * Math.PI * f_D;
+
+        // Canvas setups
+        const oCanvas = document.getElementById('orbitCanvas');
+        const oCtx = oCanvas.getContext('2d');
+        const cCanvas = document.getElementById('coherenceCanvas');
+        const cCtx = cCanvas.getContext('2d');
+
+        // UI interactive elements
+        const slider = document.getElementById('timeSlider');
+        const display = document.getElementById('timeVal');
+
+        function render(tMax) {
+            const steps = 5000;
+            
+            // Clear screens
+            oCtx.clearRect(0, 0, oCanvas.width, oCanvas.height);
+            cCtx.clearRect(0, 0, cCanvas.width, cCanvas.height);
+
+            // Left Panel: Orbit Rendering
+            const oCX = oCanvas.width / 2;
+            const oCY = oCanvas.height / 2;
+            const scale = 32; // Scaling factor to fit within 500x500 window
+
+            // Draw Central Station (Mars Base)
+            oCtx.beginPath();
+            oCtx.arc(oCX, oCY, 6, 0, 2 * Math.PI);
+            oCtx.fillStyle = '#f8f8f2';
+            oCtx.fill();
+
+            // Draw Phobos & Deimos Trails
+            oCtx.lineWidth = 0.8;
+            
+            // Render Phobos Trail
+            oCtx.beginPath();
+            oCtx.strokeStyle = 'rgba(255, 121, 198, 0.6)';
+            for (let i = 0; i <= steps; i++) {
+                let t = (i / steps) * tMax;
+                let x = oCX + (r_P * Math.cos(omega_P * t)) * scale;
+                let y = oCY + (r_P * Math.sin(omega_P * t)) * scale;
+                if (i === 0) oCtx.moveTo(x, y); else oCtx.lineTo(x, y);
+            }
+            oCtx.stroke();
+
+            // Render Deimos Trail
+            oCtx.lineWidth = 1.2;
+            oCtx.beginPath();
+            oCtx.strokeStyle = 'rgba(139, 233, 253, 0.8)';
+            for (let i = 0; i <= steps; i++) {
+                let t = (i / steps) * tMax;
+                let x = oCX + (r_D * Math.cos(omega_D * t)) * scale;
+                let y = oCY + (r_D * Math.sin(omega_D * t)) * scale;
+                if (i === 0) oCtx.moveTo(x, y); else oCtx.lineTo(x, y);
+            }
+            oCtx.stroke();
+
+            // Right Panel: Coherence Graph Grid
+            cCtx.strokeStyle = '#282a36';
+            cCtx.lineWidth = 1;
+            // Draw grid lines
+            for(let g = 1; g < 5; g++) {
+                let yLine = cCanvas.height - (g * (cCanvas.height / 5));
+                cCtx.beginPath();
+                cCtx.moveTo(0, yLine);
+                cCtx.lineTo(cCanvas.width, yLine);
+                cCtx.stroke();
+            }
+
+            // Render Coherence Envelope Curve
+            cCtx.beginPath();
+            cCtx.strokeStyle = '#50fa7b';
+            cCtx.lineWidth = 1.5;
+
+            for (let i = 0; i <= steps; i++) {
+                let t = (i / steps) * tMax;
+                let theta_P = (omega_P * t) % (2 * Math.PI);
+                let theta_D = (omega_D * t) % (2 * Math.PI);
+                
+                let d_theta = Math.abs(theta_P - theta_D);
+                d_theta = Math.min(d_theta, 2 * Math.PI - d_theta);
+                
+                let coherence = 1.0 - (d_theta / (2 * Math.PI));
+                
+                let graphX = (i / steps) * cCanvas.width;
+                let graphY = cCanvas.height - (coherence * (cCanvas.height - 40)) - 20; // Invert to fit canvas logic
+                
+                if (i === 0) cCtx.moveTo(graphX, graphY); else cCtx.lineTo(graphX, graphY);
+            }
+            cCtx.stroke();
+        }
+
+        // Initialize state and setup live change listeners
+        render(parseFloat(slider.value));
+
+        slider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            display.textContent = val.toFixed(3);
+            render(val);
+        });
+    </script>
+</body>
+</html>

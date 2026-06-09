@@ -48,7 +48,7 @@ Every parameter locks to integer nodes and rational fractions. The system is not
 | Work | DOI |
 |------|-----|
 | Law of Admissibility (R = 4) | https://doi.org/10.5281/zenodo.18223592 |
-| Calculating Planetary Distance | (https://doi.org/10.5281/zenodo.19720428) |
+| Calculating Planetary Distance | https://doi.org/10.5281/zenodo.19720428 |
 | Harmonic Orbital Mechanics | https://doi.org/10.5281/zenodo.18314933 |
 | The Origami Principle | https://doi.org/10.5281/zenodo.18293883 |
 
